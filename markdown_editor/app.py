@@ -12,26 +12,34 @@ def create_markdown_editor():
     html = markdown.markdown(markdown_text)
 
     # Display the markdown text and the rendered HTML in the app
-    st.write(markdown_text, unsafe_allow_html=True)
     st.write(html, unsafe_allow_html=True)
 
     return markdown_text
 
 
-def save_markdown_file(markdown_text):
+def save_markdown_file(markdown_text, file_name):
     # Set the name and location of the markdown file
-    file_name = ".md"
-    file_path = "contents/"
+    file_path = f"contents/{file_name}"
 
-    # Save the markdown text to the file
-    with open(file_path, "w") as f:
-        f.write(markdown_text)
-    st.success("Markdown file saved successfully!")
-    return file_path, file_name
+    # check if the file exists else create a new file
+    if os.path.exists(file_path):
+        with open(file_path, "w") as f:
+            f.write(markdown_text)
+        st.success("Markdown file saved successfully!")
+    else:
+        # Create a new file
+        with open(file_path, "x") as f:
+            f.write(markdown_text)
+        st.success("Markdown file saved successfully!")
+
+    return file_path
 
 
 def push_to_repository(markdown_text, file_path, file_name):
     # Set the URL of your Github repository
+    # Set username and token for authentication
+    username = "VenkateshDas"
+    token = os.environ.get("GIT_TOKEN")
     repository_url = "https://api.github.com/repos/{username}/{repository}"
 
     # Read the contents of the markdown file
@@ -44,13 +52,9 @@ def push_to_repository(markdown_text, file_path, file_name):
     # Set the commit message for the new file
     commit_message = "Add new blog post"
 
-    # Set username and token for authentication
-    username = "VenkateshDas"
-    token = os.environ.get("GIT_TOKEN")
-
     # Create a new file in the repository using the Github API
     response = requests.put(
-        f"{repository_url}/contents/{file_name}",
+        f"{repository_url}/markdown_editor/contents/{file_name}",
         json={
             "message": commit_message,
             "branch": branch,
@@ -71,7 +75,7 @@ def main():
     markdown_text = create_markdown_editor()
     file_name = st.text_input("Enter the name of the markdown file:")
     if st.button("Save Markdown File"):
-        file_path, file_name = save_markdown_file(markdown_text)
+        file_path = save_markdown_file(markdown_text, file_name)
         if st.button("Push to Github Repository"):
             push_to_repository(markdown_text, file_path, file_name)
 
